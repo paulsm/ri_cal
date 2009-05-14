@@ -3,4 +3,5 @@ tmp/
 pkg/
 doc/
 \.DS_Store
-\.svn
+.svn
+.specification
