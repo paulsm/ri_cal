@@ -125,7 +125,7 @@ module RiCal
 
       # set the value of the COMMENT property to multiple values
       # one or more instances of String may be passed to this method
-      def comments=(*ruby_values)
+      def comments=(ruby_values)
         @comment_property = ruby_values.map {|val| RiCal::PropertyValue::Text.convert(self, val)}
       end
 
@@ -138,7 +138,7 @@ module RiCal
       # add one or more values to the COMMENT property
       # one or more instances of String may be passed to this method
       def  add_comments(*ruby_values)
-       ruby_values.do {|val|  self.comment_property << RiCal::PropertyValue::Text.convert(self, val)}
+       ruby_values.each {|val|  self.comment_property << RiCal::PropertyValue::Text.convert(self, val)}
       end
 
       # add one value to the COMMENT property
@@ -150,7 +150,7 @@ module RiCal
       # remove one or more values from the COMMENT property
       # one or more instances of String may be passed to this method
       def  remove_comments(*ruby_values)
-       ruby_values.do {|val|  self.comment_property.delete(RiCal::PropertyValue::Text.convert(self, val))}
+       ruby_values.each {|val|  self.comment_property.delete(RiCal::PropertyValue::Text.convert(self, val))}
       end
 
       # remove one value from the COMMENT property
@@ -162,7 +162,7 @@ module RiCal
       # return the value of the COMMENT property
       # which will be an array of instances of String
       def comment
-        comment_property.map {|prop| prop ? prop.value : prop}
+        comment_property.map {|prop| prop ? prop.ruby_value : prop}
       end
 
       def comment_property_from_string(line) # :nodoc:
@@ -188,44 +188,44 @@ module RiCal
 
       # set the value of the RDATE property to multiple values
       # one or more instances of OccurrenceList may be passed to this method
-      def rdates=(*ruby_values)
-        @rdate_property = ruby_values.map {|val| RiCal::PropertyValue::OccurrenceList.convert(self, val)}
+      def rdates=(ruby_values)
+        @rdate_property = ruby_values.map {|val| RiCal::PropertyValue::OccurrenceList.convert(self, *val)}
       end
 
       # set the value of the RDATE property to a single value
       # one instance of OccurrenceList may be passed to this method
-      def rdate=(ruby_value)
-        @rdate_property = [RiCal::PropertyValue::OccurrenceList.convert(self, ruby_value)]
+      def rdate=(*ruby_value)
+        @rdate_property = [RiCal::PropertyValue::OccurrenceList.convert(self, *ruby_value)]
       end
 
       # add one or more values to the RDATE property
       # one or more instances of OccurrenceList may be passed to this method
       def  add_rdates(*ruby_values)
-       ruby_values.do {|val|  self.rdate_property << RiCal::PropertyValue::OccurrenceList.convert(self, val)}
+       ruby_values.each {|val|  self.rdate_property << RiCal::PropertyValue::OccurrenceList.convert(self, *val)}
       end
 
       # add one value to the RDATE property
       # one instances of OccurrenceList may be passed to this method
-      def  add_rdate(ruby_value)
-       self.rdate_property << RiCal::PropertyValue::OccurrenceList.convert(self, ruby_value)
+      def  add_rdate(*ruby_value)
+       self.rdate_property << RiCal::PropertyValue::OccurrenceList.convert(self, *ruby_value)
       end
 
       # remove one or more values from the RDATE property
       # one or more instances of OccurrenceList may be passed to this method
       def  remove_rdates(*ruby_values)
-       ruby_values.do {|val|  self.rdate_property.delete(RiCal::PropertyValue::OccurrenceList.convert(self, val))}
+       ruby_values.each {|val|  self.rdate_property.delete(RiCal::PropertyValue::OccurrenceList.convert(self, *val))}
       end
 
       # remove one value from the RDATE property
       # one instances of OccurrenceList may be passed to this method
-      def  remove_rdate(ruby_value)
-       self.rdate_property.delete(RiCal::PropertyValue::OccurrenceList.convert(self, ruby_value))
+      def  remove_rdate(*ruby_value)
+       self.rdate_property.delete(RiCal::PropertyValue::OccurrenceList.convert(self, *ruby_value))
       end
 
       # return the value of the RDATE property
       # which will be an array of instances of OccurrenceList
       def rdate
-        rdate_property.map {|prop| prop ? prop.value : prop}
+        rdate_property.map {|prop| prop ? prop.ruby_value : prop}
       end
 
       def rdate_property_from_string(line) # :nodoc:
@@ -251,7 +251,7 @@ module RiCal
 
       # set the value of the RRULE property to multiple values
       # one or more instances of RecurrenceRule may be passed to this method
-      def rrules=(*ruby_values)
+      def rrules=(ruby_values)
         @rrule_property = ruby_values.map {|val| RiCal::PropertyValue::RecurrenceRule.convert(self, val)}
       end
 
@@ -264,7 +264,7 @@ module RiCal
       # add one or more values to the RRULE property
       # one or more instances of RecurrenceRule may be passed to this method
       def  add_rrules(*ruby_values)
-       ruby_values.do {|val|  self.rrule_property << RiCal::PropertyValue::RecurrenceRule.convert(self, val)}
+       ruby_values.each {|val|  self.rrule_property << RiCal::PropertyValue::RecurrenceRule.convert(self, val)}
       end
 
       # add one value to the RRULE property
@@ -276,7 +276,7 @@ module RiCal
       # remove one or more values from the RRULE property
       # one or more instances of RecurrenceRule may be passed to this method
       def  remove_rrules(*ruby_values)
-       ruby_values.do {|val|  self.rrule_property.delete(RiCal::PropertyValue::RecurrenceRule.convert(self, val))}
+       ruby_values.each {|val|  self.rrule_property.delete(RiCal::PropertyValue::RecurrenceRule.convert(self, val))}
       end
 
       # remove one value from the RRULE property
@@ -288,7 +288,7 @@ module RiCal
       # return the value of the RRULE property
       # which will be an array of instances of RecurrenceRule
       def rrule
-        rrule_property.map {|prop| prop ? prop.value : prop}
+        rrule_property.map {|prop| prop ? prop.ruby_value : prop}
       end
 
       def rrule_property_from_string(line) # :nodoc:
@@ -314,7 +314,7 @@ module RiCal
 
       # set the value of the TZNAME property to multiple values
       # one or more instances of String may be passed to this method
-      def tznames=(*ruby_values)
+      def tznames=(ruby_values)
         @tzname_property = ruby_values.map {|val| RiCal::PropertyValue::Text.convert(self, val)}
       end
 
@@ -327,7 +327,7 @@ module RiCal
       # add one or more values to the TZNAME property
       # one or more instances of String may be passed to this method
       def  add_tznames(*ruby_values)
-       ruby_values.do {|val|  self.tzname_property << RiCal::PropertyValue::Text.convert(self, val)}
+       ruby_values.each {|val|  self.tzname_property << RiCal::PropertyValue::Text.convert(self, val)}
       end
 
       # add one value to the TZNAME property
@@ -339,7 +339,7 @@ module RiCal
       # remove one or more values from the TZNAME property
       # one or more instances of String may be passed to this method
       def  remove_tznames(*ruby_values)
-       ruby_values.do {|val|  self.tzname_property.delete(RiCal::PropertyValue::Text.convert(self, val))}
+       ruby_values.each {|val|  self.tzname_property.delete(RiCal::PropertyValue::Text.convert(self, val))}
       end
 
       # remove one value from the TZNAME property
@@ -351,7 +351,7 @@ module RiCal
       # return the value of the TZNAME property
       # which will be an array of instances of String
       def tzname
-        tzname_property.map {|prop| prop ? prop.value : prop}
+        tzname_property.map {|prop| prop ? prop.ruby_value : prop}
       end
 
       def tzname_property_from_string(line) # :nodoc:

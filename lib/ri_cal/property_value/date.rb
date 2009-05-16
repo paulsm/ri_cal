@@ -1,13 +1,17 @@
 require 'date'
 module RiCal
   class PropertyValue
-    #- ©2009 Rick DeNatale
-    #- All rights reserved. Refer to the file README.txt for the license
+    #- ©2009 Rick DeNatale, All rights reserved. Refer to the file README.txt for the license
     #
     # RiCal::PropertyValue::CalAddress represents an icalendar Date property value
     # which is defined in
     # RFC 2445 section 4.3.4 p 34
     class Date < PropertyValue
+
+      def self.valid_string?(string) #:nodoc:
+        string =~ /^\d{8}$/
+      end
+
       # Returns the value of the reciever as an RFC 2445 iCalendar string
       def value
         if @date_time_value
@@ -34,6 +38,14 @@ module RiCal
         when ::Time, ::Date, ::DateTime
           @date_time_value = ::DateTime.parse(val.strftime("%Y%m%d"))
         end
+      end
+
+      # Nop to allow occurrence list to try to set it
+      def tzid=(val)#:nodoc:
+      end
+
+      def tzid #:nodoc:
+        nil
       end
 
       def visible_params #:nodoc:
@@ -68,7 +80,7 @@ module RiCal
       end
 
       # Return this date property
-      def to_ri_cal_date_value
+      def to_ri_cal_date_value(timezone_finder = nil)
         self
       end
 

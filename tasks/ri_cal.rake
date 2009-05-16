@@ -1,7 +1,6 @@
 #require 'active_support'
 require 'yaml'
-#- ©2009 Rick DeNatale
-#- All rights reserved. Refer to the file README.txt for the license
+#- ©2009 Rick DeNatale, All rights reserved. Refer to the file README.txt for the license
 #
 # code stolen from ActiveSupport Gem
 unless  String.instance_methods.include?("camelize")
@@ -166,6 +165,14 @@ class VEntityUpdater
     else
       line_evaluator = "#{type_class(type)}.new(self, line)"
     end
+    
+    if %w{Array, OccurrenceList}.include?(type)
+      ruby_val_parm = "*ruby_value"
+      val_parm = "*val"
+    else
+      ruby_val_parm = "ruby_value"
+      val_parm = "val"
+    end
     blank_line
     if multi
       comment(
@@ -192,45 +199,45 @@ class VEntityUpdater
         blank_line
         comment("set the value of the #{name.upcase} property to multiple values")
         comment("one or more instances of #{describe_type(type)} may be passed to this method")
-        indent("def #{plural_ruby_method}=(*ruby_values)")
-        indent("  @#{property} = ruby_values.map {|val| #{type_class(type)}.convert(self, val)}")
+        indent("def #{plural_ruby_method}=(ruby_values)")
+        indent("  @#{property} = ruby_values.map {|val| #{type_class(type)}.convert(self, #{val_parm})}")
         indent("end")
         blank_line
         comment("set the value of the #{name.upcase} property to a single value")
         comment("one instance of #{describe_type(type)} may be passed to this method")
-        indent("def #{ruby_method}=(ruby_value)")
-        indent("  @#{property} = [#{type_class(type)}.convert(self, ruby_value)]")
+        indent("def #{ruby_method}=(#{ruby_val_parm})")
+        indent("  @#{property} = [#{type_class(type)}.convert(self, #{ruby_val_parm})]")
         indent("end")
         blank_line
         comment("add one or more values to the #{name.upcase} property")
         comment("one or more instances of #{describe_type(type)} may be passed to this method")
         indent("def  add_#{plural_ruby_method}(*ruby_values)")
-        indent(" ruby_values.do {|val|  self.#{property} << #{type_class(type)}.convert(self, val)}")
+        indent(" ruby_values.each {|val|  self.#{property} << #{type_class(type)}.convert(self, #{val_parm})}")
         indent("end")
         blank_line
         comment("add one value to the #{name.upcase} property")
         comment("one instances of #{describe_type(type)} may be passed to this method")
-        indent("def  add_#{ruby_method}(ruby_value)")
-        indent(" self.#{property} << #{type_class(type)}.convert(self, ruby_value)")
+        indent("def  add_#{ruby_method}(#{ruby_val_parm})")
+        indent(" self.#{property} << #{type_class(type)}.convert(self, #{ruby_val_parm})")
         indent("end")
         blank_line
         comment("remove one or more values from the #{name.upcase} property")
         comment("one or more instances of #{describe_type(type)} may be passed to this method")
         indent("def  remove_#{plural_ruby_method}(*ruby_values)")
-        indent(" ruby_values.do {|val|  self.#{property}.delete(#{type_class(type)}.convert(self, val))}")
+        indent(" ruby_values.each {|val|  self.#{property}.delete(#{type_class(type)}.convert(self, #{val_parm}))}")
         indent("end")
         blank_line
         comment("remove one value from the #{name.upcase} property")
         comment("one instances of #{describe_type(type)} may be passed to this method")
-        indent("def  remove_#{ruby_method}(ruby_value)")
-        indent(" self.#{property}.delete(#{type_class(type)}.convert(self, ruby_value))")
+        indent("def  remove_#{ruby_method}(#{ruby_val_parm})")
+        indent(" self.#{property}.delete(#{type_class(type)}.convert(self, #{ruby_val_parm}))")
         indent("end")
       end
       blank_line
       comment("return the value of the #{name.upcase} property")
       comment("which will be an array of instances of #{describe_type(type)}")
       indent("def #{ruby_method}")
-      indent("  #{property}.map {|prop| prop ? prop.value : prop}")
+      indent("  #{property}.map {|prop| prop ? prop.ruby_value : prop}")
       indent("end")
       blank_line
     no_doc("def #{property}_from_string(line)")

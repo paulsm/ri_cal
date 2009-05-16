@@ -1,5 +1,4 @@
-#- ©2009 Rick DeNatale
-#- All rights reserved
+#- ©2009 Rick DeNatale, All rights reserved. Refer to the file README.txt for the license
 
 require File.join(File.dirname(__FILE__), %w[.. spec_helper])
 
@@ -114,7 +113,7 @@ describe RiCal::Parser do
       describe_multi_property("VEVENT", "ATTACH", {"FMTTYPE" => "application/postscript"}, "FMTTYPE=application/postscript:ftp//xyzCorp.com/put/reports/r-960812.ps", RiCal::PropertyValue::Uri)
 
       #RFC 2445 section 4.8.1.2 pp 78
-      describe_multi_property("VEVENT", "CATEGORIES", {"LANGUAGE" => "us-EN"}, %w{APPOINTMENT EDUCATION}, RiCal::PropertyValue::Array)
+      describe_multi_property("VEVENT", "CATEGORIES", {"LANGUAGE" => "us-EN"}, "APPOINTMENT,EDUCATION", RiCal::PropertyValue::Array)
 
       #RFC 2445 section 4.8.1.3 pp 79
       describe_named_property("VEVENT", "CLASS", "security_class", {"X-FOO" => "BAR"}, "PUBLIC", false)
@@ -137,7 +136,7 @@ describe RiCal::Parser do
       describe_property("VEVENT", "PRIORITY", {"X-FOO" => "BAR"}, 1, RiCal::PropertyValue::Integer)
 
       #RFC 2445 section 4.8.1.10 pp 87
-      describe_multi_property("VEVENT", "RESOURCES", {"X-FOO" => "BAR"}, %w{Easel Projector VCR}, RiCal::PropertyValue::Array)
+      describe_multi_property("VEVENT", "RESOURCES", {"X-FOO" => "BAR"}, "Easel,Projector,VCR", RiCal::PropertyValue::Array)
 
       #RFC 2445 section 4.8.1.11 pp 88
       describe_property("VEVENT", "STATUS", {"X-FOO" => "BAR"}, "CONFIRMED")
@@ -158,7 +157,7 @@ describe RiCal::Parser do
       describe_property("VEVENT", "DTSTART", {"X-FOO" => "BAR"}, "19970714T235959Z", RiCal::PropertyValue::DateTime)
 
       #RFC 2445 section 4.8.2.5 DURATION p94
-      describe_property("VEVENT", "DURATION", {"X-FOO" => "BAR"}, "19970714", RiCal::PropertyValue::Duration)
+      describe_property("VEVENT", "DURATION", {"X-FOO" => "BAR"}, "P1H", RiCal::PropertyValue::Duration)
 
       #RFC 2445 section 4.8.2.6 FREEBUSY does not apply to Events
       
@@ -193,13 +192,13 @@ describe RiCal::Parser do
       describe_property("VEVENT", "UID", {"X-FOO" => "BAR"}, "19960401T080045Z-4000F192713-0052@host1.com")
             
       #RFC 2445 section 4.8.5.1 EXDATE p112
-      describe_multi_property("VEVENT", "EXDATE", {"X-FOO" => "BAR"}, %w{19960402T010000Z 19960403T010000Z 19960404T010000Z}, RiCal::PropertyValue::OccurrenceList)
+      describe_multi_property("VEVENT", "EXDATE", {"X-FOO" => "BAR"}, "19960402T010000,19960403T010000,19960404T010000", RiCal::PropertyValue::OccurrenceList)
 
       #RFC 2445 section 4.8.5.2 EXRULE p114
       describe_multi_property("VEVENT", "EXRULE", {"X-FOO" => "BAR"}, "FREQ=DAILY;COUNT=10", RiCal::PropertyValue::RecurrenceRule)
 
       #RFC 2445 section 4.8.5.3 RDATE p115
-      describe_multi_property("VEVENT", "RDATE", {"X-FOO" => "BAR"}, %w{19960402T010000Z 19960403T010000Z 19960404T010000Z}, RiCal::PropertyValue::OccurrenceList)
+      describe_multi_property("VEVENT", "RDATE", {"X-FOO" => "BAR"}, "19960402T010000,19960403T010000,19960404T010000", RiCal::PropertyValue::OccurrenceList)
 
       #RFC 2445 section 4.8.5.2 RRULE p117
       describe_multi_property("VEVENT", "RRULE", {"X-FOO" => "BAR"}, "FREQ=DAILY;COUNT=10", RiCal::PropertyValue::RecurrenceRule)

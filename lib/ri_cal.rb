@@ -1,5 +1,4 @@
-#- ©2009 Rick DeNatale
-#- All rights reserved. Refer to the file README.txt for the license
+#- ©2009 Rick DeNatale, All rights reserved. Refer to the file README.txt for the license
 #
 # The RiCal module provides the outermost namespace, along with several convenience methods for parsing
 # and building calendars and calendar components.
@@ -12,7 +11,7 @@ module RiCal
   autoload :OccurrenceEnumerator, "#{my_dir}/ri_cal/occurrence_enumerator.rb"
   
   # :stopdoc:
-  VERSION = '0.0.2'
+  VERSION = '0.0.3'
   LIBPATH = ::File.expand_path(::File.dirname(__FILE__)) + ::File::SEPARATOR
   PATH = ::File.dirname(LIBPATH) + ::File::SEPARATOR
 

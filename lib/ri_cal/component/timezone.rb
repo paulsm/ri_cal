@@ -2,8 +2,7 @@ require File.join(File.dirname(__FILE__), %w[.. properties timezone.rb])
 
 module RiCal
   class Component
-    #- ©2009 Rick DeNatale
-    #- All rights reserved. Refer to the file README.txt for the license
+    #- ©2009 Rick DeNatale, All rights reserved. Refer to the file README.txt for the license
     #
     # An Timezone (VTIMEZONE) calendar component describes a timezone used within the calendar.
     # A Timezone has two or more TimezonePeriod subcomponents which describe the transitions between
@@ -22,6 +21,10 @@ module RiCal
         def name
           # Don't use alias, as identifier gets overridden.
           identifier
+        end
+        
+        def rational_utc_offset(local) #:nodoc:
+          Rational(period_for_local(local, true).utc_offset, 3600) / 24
         end
 
         # Returns the TimezonePeriod for the given UTC time. utc can either be a DateTime,

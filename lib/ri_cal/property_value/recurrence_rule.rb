@@ -4,8 +4,7 @@ end
 
 module RiCal
   class PropertyValue
-    #- ©2009 Rick DeNatale
-    #- All rights reserved. Refer to the file README.txt for the license
+    #- ©2009 Rick DeNatale, All rights reserved. Refer to the file README.txt for the license
     #
     # RiCal::PropertyValue::RecurrenceRule represents an icalendar Recurrence Rule property value
     # which is defined in 
@@ -99,7 +98,7 @@ module RiCal
       #
       def until=(until_value)
         reset_errors
-        @until = until_value && until_value.to_ri_cal_date_or_date_time_value
+        @until = until_value && until_value.to_ri_cal_date_or_date_time_value(timezone_finder)
         @count = nil unless @count.nil? || @by_list_hash
       end
 
@@ -119,7 +118,7 @@ module RiCal
         @interval = interval_value
       end
       
-      def value
+      def value #:nodoc:
         @value || to_ical
       end      
 

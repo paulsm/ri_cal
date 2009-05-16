@@ -1,6 +1,5 @@
 module RiCal
-  #- ©2009 Rick DeNatale
-  #- All rights reserved. Refer to the file README.txt for the license
+  #- ©2009 Rick DeNatale, All rights reserved. Refer to the file README.txt for the license
   #
   # PropertyValue provides common implementation of various RFC 2445 property value types
   class PropertyValue
@@ -12,9 +11,17 @@ module RiCal
       validate_value(options)
       ({:params => {}}).merge(options).each do |attribute, val|
         unless attribute == :name
-          setter = :"#{attribute.to_s}="
+          setter = :"#{attribute.to_s.downcase}="
           send(setter, val)
         end
+      end
+    end
+    
+    def self.if_valid_string(timezone_finder, string) #:nodoc:
+      if valid_string?(string)
+        new(timezone_finder, :value => string)
+      else
+        nil
       end
     end
 
@@ -33,7 +40,7 @@ module RiCal
       options_hash[:params] = params unless params.empty?
     end
 
-    def self.date_or_date_time(parent, separated_line) # :nodoc:
+    def self.date_or_date_time(timezone_finder, separated_line) # :nodoc:
       match = separated_line[:value].match(/(\d\d\d\d)(\d\d)(\d\d)((T?)((\d\d)(\d\d)(\d\d))(Z?))?/)
       raise Exception.new("Invalid date") unless match
       if match[5] == "T" # date-time
@@ -43,18 +50,26 @@ module RiCal
           raise Exception.new("Invalid time, cannot combine Zulu with timezone reference") if parms[:tzid]
           parms['TZID'] = "UTC"
         end
-        PropertyValue::DateTime.new(parent, separated_line.merge(:params => parms))
+        PropertyValue::DateTime.new(timezone_finder, separated_line.merge(:params => parms))
       else
-        PropertyValue::Date.new(parent, separated_line)
+        PropertyValue::Date.new(timezone_finder, separated_line)
+      end
+    end
+    
+    def self.date_or_date_time_or_period(timezone_finder, separated_line) #:nodoc:
+      if separated_line[:value].include?("/")
+        PropertyValue::Period.new(timezone_finder, separated_line)
+      else
+        date_or_date_time(timezone_finder, separated_line)
       end
     end
 
-    def self.from_string(string) # :nodoc:
-      new(nil, :value => string)
-    end
+    # def self.from_string(string) # :nodoc:
+    #   new(nil, :value => string)
+    # end
 
-    def self.convert(parent, value) #:nodoc:
-      new(parent, :value => value)
+    def self.convert(timezone_finder, value) #:nodoc:
+      new(timezone_finder, :value => value)
     end
 
     # Determine if another object is equivalent to the receiver.
@@ -100,6 +115,22 @@ module RiCal
 
     def to_ri_cal_property_value #:nodoc:
       self
+    end
+    
+    def find_timezone(timezone_identifier) #:nodoc:
+      if timezone_finder
+        timezone_finder.find_timezone(timezone_identifier)
+      else
+        raise "Unable to find timezone with tzid #{timezone_identifier}"
+      end
+    end
+    
+    def default_tzid #:nodoc:
+      if timezone_finder
+        timezone_finder.default_tzid
+      else
+        PropertyValue::DateTime.default_tzid
+      end
     end
   end
 end

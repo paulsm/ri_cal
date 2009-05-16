@@ -1,8 +1,7 @@
 module RiCal
-  #- ©2009 Rick DeNatale
-  #- All rights reserved. Refer to the file README.txt for the license
+  #- ©2009 Rick DeNatale, All rights reserved. Refer to the file README.txt for the license
   #
-  class Component    
+  class Component #:nodoc:
     class ComponentBuilder #:nodoc:
       def initialize(component)
         @component = component
@@ -46,11 +45,27 @@ module RiCal
       end
     end
     
-    def find_timezone(identifier) #:nodoc:
-      @parent.find_timezone(identifier)
+    def default_tzid #:nodoc:
+      if @parent
+        @parent.default_tzid
+      else
+        PropertyValue::DateTime.default_tzid
+      end
     end
     
-    def time_zone_for(ruby_object)
+    def find_timezone(identifier) #:nodoc:
+      if @parent
+        @parent.find_timezone(identifier)
+      else
+        begin
+          Calendar::TZInfoWrapper.new(TZInfo::Timezone.get(identifier), self)
+        rescue ::TZInfo::InvalidTimezoneIdentifier => ex
+          raise RiCal::InvalidTimezoneIdentifier.invalid_tzinfo_identifier(identifier)
+        end
+      end
+    end
+
+    def time_zone_for(ruby_object) #:nodoc:
       @parent.time_zone_for(ruby_object) #:nodoc:
     end
     
@@ -127,7 +142,7 @@ module RiCal
       x_properties[name] = prop
     end
     
-    def method_missing(selector, *args, &b)
+    def method_missing(selector, *args, &b) #:nodoc:
       xprop_candidate = selector.to_s
       if (match = /^x_(.+)(=?)$/.match(xprop_candidate))
         if match[2] == "="

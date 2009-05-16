@@ -1,7 +1,6 @@
 module RiCal
   class PropertyValue
-    #- ©2009 Rick DeNatale
-    #- All rights reserved. Refer to the file README.txt for the license
+    #- ©2009 Rick DeNatale, All rights reserved. Refer to the file README.txt for the license
     #
     # RiCal::PropertyValue::CalAddress represents an icalendar Period property value
     # which is defined in 
@@ -29,7 +28,28 @@ module RiCal
         end
       end
       
-      def for_parent(parent)
+      
+      def self.valid_string?(string) # :nodoc:
+        return false unless string.include?("/")
+        starter, terminator = *string.split("/")
+        return false unless PropertyValue::DateTime.valid_string?(starter)
+        if /P/ =~ terminator
+          return false unless PropertyValue::Duration.valid_string?(terminator)
+        else
+          return false unless PropertyValue::DateTime.valid_string?(terminator)
+        end
+        true
+      end
+      
+      # Nop to allow occurrence list to try to set it
+      def tzid=(val)#:nodoc:
+      end
+      
+      def tzid #:nodoc:
+        nil
+      end
+      
+      def for_parent(parent) #:nodoc:
         if timezone_finder.nil
           @timezone_finder = parent
           self

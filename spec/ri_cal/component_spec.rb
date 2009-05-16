@@ -1,7 +1,7 @@
-#- ©2009 Rick DeNatale
-#- All rights reserved
+#- ©2009 Rick DeNatale, All rights reserved. Refer to the file README.txt for the license
 
 require File.join(File.dirname(__FILE__), %w[.. spec_helper])
+require 'tzinfo'
 
 describe RiCal::Component do
 
@@ -28,28 +28,40 @@ describe RiCal::Component do
     context "building a calendar with time zones" do
       it 'should allow specifying the time zone identifier' do
         event = RiCal.Event do
-          dtstart     [DateTime.parse("Feb 20, 1962 14:47:39"), 'US/Pacific']
+          dtstart     DateTime.parse("Feb 20, 1962 14:47:39").set_tzid('US/Pacific')
         end
         event.dtstart_property.should == dt_prop(DateTime.parse("Feb 20, 1962 14:47:39"), tzid = 'US/Pacific')
       end
 
       context "adding an exception date" do
         
-        it "should test stuff"
-        # before(:each) do
-        #   @event = RiCal.Event do
-        #     add_exdate [DateTime.parse("Feb 20, 1962 14:47:39"), 'US/Pacific']
-        #   end
-        #   @prop = @event.exdate_property.first
-        # end
-        # 
-        # it "should produce an OccurrenceList for the property" do
-        #   @prop.should be_instance_of(RiCal::PropertyValue::OccurrenceList)
-        # end
-        # 
-        # it "should have the right exdate value" do
-        #   @event.exdate.should == ""
-        # end
+        before(:each) do
+          @cal =  RiCal.Calendar do
+            event do
+              add_exdate 'US/Eastern', "19620220T144739"
+            end
+          end
+          @event = @cal.events.first
+          @prop = @event.exdate_property.first
+        end
+
+        it "should produce an OccurrenceList for the property" do
+          @prop.should be_instance_of(RiCal::PropertyValue::OccurrenceList)
+        end
+
+        it "should have a property with the right ical representation" do
+          @prop.to_s.should == ";TZID=US/Eastern:19620220T144739"
+        end
+        
+        context "its ruby_value" do
+          it "should have the right value" do
+            @prop.ruby_value.should == [DateTime.civil(1962, 2, 20, 14, 47, 39, Rational(-5, 24))]
+          end
+          
+          it "should have the right tzid" do
+            @prop.ruby_value.first.tzid.should == "US/Eastern"
+          end
+        end
       end
     end
 
