@@ -56,7 +56,7 @@ module RiCal
       end
       
       # return the earliest of each of the enumerators next occurrences
-      def next_occurrence        
+      def next_occurrence
         result = nexts.compact.sort.first
         if result
           nexts.each_with_index { |datetimevalue, i| @nexts[i] = @enumerators[i].next_occurrence if result == datetimevalue }
@@ -85,7 +85,7 @@ module RiCal
       # return the next exclusion which starts at the same time or after the start time of the occurrence
       # return nil if this exhausts the exclusion rules
       def exclusion_for(occurrence)
-        while (@next_exclusion && @next_exclusion[:start] < occurrence[:start])
+        while (@next_exclusion && @next_exclusion.dtstart < occurrence.dtstart)
           @next_exclusion = @exrules.next_occurrence
         end
         @next_exclusion
@@ -94,13 +94,13 @@ module RiCal
       # TODO: Need to research this, I beleive that this should also take the end time into account,
       #       but I need to research
       def exclusion_match?(occurrence, exclusion)
-        exclusion && occurrence[:start] == occurrence[:start]
+        exclusion && (occurrence.dtstart == exclusion.dtstart)
       end
       
       # Also exclude occurrences before the :starting date_time
       def exclude?(occurrence)
         exclusion_match?(occurrence, exclusion_for(occurrence)) ||
-          (@start && occurrence[:start].to_datetime < @start)
+          (@start && occurrence.dtstart.to_datetime < @start)
       end
       
       # yield each occurrence to a block
@@ -113,7 +113,7 @@ module RiCal
           yielded = 0
           @next_exclusion = @exrules.next_occurrence
           while (occurrence)
-            if (@cutoff && occurrence[:start].to_datetime >= @cutoff) || (@count && yielded >= @count)
+            if (@cutoff && occurrence.dtstart.to_datetime >= @cutoff) || (@count && yielded >= @count)
               occurrence = nil
             else
               unless exclude?(occurrence)
@@ -165,22 +165,18 @@ module RiCal
     end
     #
     def set_occurrence_properties!(occurrence) # :nodoc:
-      occurrence_end = occurrence[:end]
-      occurrence_start = occurrence[:start]
+      occurrence_end = occurrence.dtend
+      occurrence_start = occurrence.dtstart
       @rrule_property = nil
       @exrule_property = nil
       @rdate_property = nil
       @exdate_property = nil
       @recurrence_id_property = occurrence_start
-      @dtstart_property = occurrence_start
-      if occurrence_end
-        @dtend_property = occurrence_end
-      else
-        if dtend
-          my_duration = @dtend_property - @dtstart_property
-          @dtend_property = occurrence_start + my_duration
-        end
+      if @dtend_property && !occurrence_end
+        occurrence_end = occurrence_start + (@dtend_property - @dtstart_property)
       end
+      @dtstart_property = dtstart_property.for_occurrence(occurrence_start)
+      @dtend_property = dtend_property.for_occurrence(occurrence_end) if @dtend_property
       self      
     end
     

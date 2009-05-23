@@ -17,13 +17,17 @@ module RiCal
           @index = 0
         end
         
+        def bounded?
+          true
+        end
+        
         def empty?
           occurrence_list.empty?
         end
 
         def next_occurrence
           if @index < occurrence_list.length
-            result = occurrence_list[@index].occurrence_hash(default_duration)
+            result = occurrence_list[@index].occurrence_period(default_duration)
             @index += 1
             result
           else
@@ -75,6 +79,7 @@ module RiCal
           @value = @elements.map {|prop| prop.value}
         else
           @elements = values_to_elements(@value)
+          self.tzid = params['TZID']
         end
         # if the tzid wasn't set by the parameters
         self.tzid ||= @elements.map {|element| element.tzid}.find {|id| id}
