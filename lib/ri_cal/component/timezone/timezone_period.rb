@@ -39,13 +39,24 @@ module RiCal
         end
 
         def last_before_local(local_time) #:nodoc:
-          cand_occurrence = nil
+
+          return @cand_occurrence if @last_checked_dtstart &&
+                                     ((@cand_occurrence == nil) ||
+                                      (@cand_occurrence.dtstart_property < local_time &&
+                                       local_time < @last_checked_dtstart))
+          
+          @last_local_time = local_time
+          @last_checked_dtstart = nil
+          @cand_occurrence = nil
+          
           each do |occurrence|
-            return cand_occurrence if occurrence.dtstart_property > local_time
-            cand_occurrence = occurrence
+            @last_checked_dtstart = occurrence.dtstart_property
+            return @cand_occurrence if occurrence.dtstart_property > local_time
+            @cand_occurrence = occurrence
           end
-          return cand_occurrence
+          return @cand_occurrence
         end
+
       end
     end
   end

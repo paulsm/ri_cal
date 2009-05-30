@@ -46,7 +46,7 @@ module RiCal
         # Returns a instance that represents the time in UTC.
         def utc
           if has_local_timezone?
-            @utc ||= timezone.local_to_utc(self)
+            timezone.local_to_utc(self)
           else  # Already local or a floating time
             self
           end
@@ -54,7 +54,7 @@ module RiCal
 
         def rational_tz_offset #:nodoc:
           if has_local_timezone?
-            @rational_tz_offset ||= timezone.rational_utc_offset(@date_time_value)
+            timezone.rational_utc_offset(@date_time_value)
           else
             Rational(0,24)
           end
