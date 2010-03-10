@@ -1,5 +1,3 @@
-require File.join(File.dirname(__FILE__), %w[.. properties calendar.rb])
-
 module RiCal
   class Component
     #- ©2009 Rick DeNatale, All rights reserved. Refer to the file README.txt for the license
@@ -9,7 +7,7 @@ module RiCal
       include RiCal::Properties::Calendar
       attr_reader :tz_source #:nodoc:
 
-      def initialize(parent=nil, &init_block) #:nodoc:
+      def initialize(parent=nil,entity_name = nil, &init_block) #:nodoc:
         @tz_source = 'TZINFO' # Until otherwise told
         super
       end
@@ -140,7 +138,7 @@ module RiCal
 
 
         def rational_utc_offset(local)
-          Rational(tzinfo.period_for_local(local, true).utc_total_offset, 3600) / 24
+          RiCal.RationalOffset[tzinfo.period_for_local(local, true).utc_total_offset]
         end
 
       end
@@ -172,23 +170,39 @@ module RiCal
         def string #:nodoc:
           stream.string
         end
-        
-        def valid_utf8?(string)
-          string.unpack("U") rescue nil
-        end
 
-        def utf8_safe_split(string, n)
-          if string.length <= n
-            [string, nil]
-          else
-            before = string[0, n]
-            after = string[n..-1]
-            until valid_utf8?(after)
-              n = n - 1
+        if RUBY_VERSION =~ /^1\.9/
+          def utf8_safe_split(string, n)
+            if string.bytesize <= n
+              [string, nil]
+            else
+              bytes = string.bytes.to_a
+              while (128..191).include?(bytes[n])
+                n = n - 1
+              end
+              before = bytes[0,n]
+              after = bytes[n..-1]
+              [before.pack("C*").force_encoding("utf-8"), after.empty? ? nil : after.pack("C*").force_encoding("utf-8")]
+            end
+          end
+        else
+          def valid_utf8?(string)
+            string.unpack("U") rescue nil
+          end
+
+          def utf8_safe_split(string, n)
+            if string.length <= n
+              [string, nil]
+            else
               before = string[0, n]
               after = string[n..-1]
-            end      
-            [before, after.empty? ? nil : after]
+              until valid_utf8?(after)
+                n = n - 1
+                before = string[0, n]
+                after = string[n..-1]
+              end      
+              [before, after.empty? ? nil : after]
+            end
           end
         end
 
@@ -216,8 +230,6 @@ module RiCal
       def export(to=nil)
         export_stream = FoldingStream.new(to)
         export_stream.puts("BEGIN:VCALENDAR")
-        #TODO: right now I'm assuming that all timezones are internal what happens when we export
-        #      an imported calendar.
         export_properties_to(export_stream)
         export_x_properties_to(export_stream)
         export_required_timezones(export_stream)
@@ -225,6 +237,11 @@ module RiCal
         export_subcomponent_to(export_stream, todos)
         export_subcomponent_to(export_stream, journals)
         export_subcomponent_to(export_stream, freebusys)
+        subcomponents.each do |key, value|
+          unless %{VEVENT VTODO VJOURNAL VFREEBUSYS}.include?(key)
+            export_subcomponent_to(export_stream, value)
+          end
+        end
         export_stream.puts("END:VCALENDAR")
         if to
           nil
@@ -232,6 +249,8 @@ module RiCal
           export_stream.string
         end
       end
+      
+      alias_method :export_to, :export
 
     end
   end

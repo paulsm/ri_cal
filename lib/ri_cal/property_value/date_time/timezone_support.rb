@@ -13,7 +13,11 @@ module RiCal
         def tzid=(timezone_id) #:nodoc:
           timezone_id = default_tzid if timezone_id == :default
           @tzid = timezone_id
-          @timezone = nil
+          reset_cached_values
+        end
+
+        def reset_cached_values #:nodoc:
+          @timezone = @utc = @rational_tz_offset = nil
         end
 
         def find_timezone #:nodoc:
@@ -46,7 +50,7 @@ module RiCal
         # Returns a instance that represents the time in UTC.
         def utc
           if has_local_timezone?
-            timezone.local_to_utc(self)
+            @utc ||= timezone.local_to_utc(self)
           else  # Already local or a floating time
             self
           end
@@ -54,9 +58,9 @@ module RiCal
 
         def rational_tz_offset #:nodoc:
           if has_local_timezone?
-            timezone.rational_utc_offset(@date_time_value)
+            @rational_tz_offset ||= timezone.rational_utc_offset(@date_time_value.to_datetime)
           else
-            Rational(0,24)
+            @rational_tz_offset ||= RiCal.RationalOffset[0]
           end
         end
 
@@ -69,7 +73,7 @@ module RiCal
         def floating?
           tzid.nil?
         end
-        
+
         def has_valid_tzinfo_tzid? #:nodoc:
           if tzid && tzid != :floating
             TZInfo::Timezone.get(tzid) rescue false

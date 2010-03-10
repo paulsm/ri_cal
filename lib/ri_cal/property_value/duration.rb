@@ -34,7 +34,7 @@ module RiCal
       end
 
       def self.convert(parent, ruby_object) # :nodoc:
-        ruby_object.to_ri_cal_duration_value.for_parent(parent)
+        ruby_object.to_ri_cal_duration_value
       end
 
       def value=(string) # :nodoc:
@@ -62,7 +62,7 @@ module RiCal
       end
       
       def self.valid_string?(string) #:nodoc:
-        string =~  /^[+-]?P((\d+)[DHMSW])+$/
+        string =~  /^[+-]?P((\d+D)(T((\d+)[HMS])+)?)|(T((\d+)[HMS])+)|(\d+W)$/
       end
 
       def days # :nodoc:

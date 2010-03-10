@@ -19,6 +19,8 @@ A Google group for discussion of this library has been set up http://groups.goog
 
 == SYNOPSIS:
 
+For the full RDOC see http://ri-cal.rubyforge.org/rdoc/
+
 === Components and properties
 
 An iCalendar calendar comprises subcomponents like Events, Timezones and Todos. Each component may
@@ -326,6 +328,8 @@ In the case of unbounded components, you must either use the :count, or :before 
 or
 
   event.occurrences(:before => Date.today >> 1)
+  
+Another option on the occurrences method is the :overlapping option, which takes an array of two Dates, Times or DateTimes which are expected to be in chronological order.  Only events which occur either partially or fully within the range given by the :overlapping option will be enumerated.
 
 Alternately, you can use the RiCal::OccurrenceEnumerator#each method,
 or another Enumerable method (RiCal::OccurrenceEnumerator includes Enumerable), and terminate when you wish by breaking out of the block.
@@ -334,6 +338,24 @@ or another Enumerable method (RiCal::OccurrenceEnumerator includes Enumerable), 
 	   break if some_termination_condition
 	   #....
 	end
+
+=== Unknown Components
+
+Starting with version 0.8.0 RiCal will parse calendars and components which contain nonstandard components.
+
+For example, there was a short-lived proposal to extend RFC2445 with a new VVENUE component which would hold structured information about the location of an event.  This proposal was never accepted and was withdrawn, but there is icalendar data in the wild which contains VVENUE components.
+
+Prior to version 0.8.0, RiCal would raise an exception if unknown component types were encountered.  Starting with version 0.8.0 RiCal will 'parse' such components and create instances of NonStandard component to represent them.  Since the actual format of unknown components is not known by RiCal, the NonStandard component will simply save the data lines between the BEGIN:xxx and END:xxx lines, (where xxx is the non-standard component name, e.g. VVENUE).  If the calendar is re-exported the original lines will be replayed.
+
+=== Change to treatment of X-properties
+
+RFC2445 allows 'non-standard' or experimental properties which property-names beginning with X.  RiCal always supported parsing these.
+
+The standard properties are specified as to how many times they can occur within a particular component.  For singly occurring properties RiCal returns a single property object, while for properties which can occur multiple times RiCal returns an array of property objects.
+
+While implementing NonStandard properties, I realized that X-properties were being assumed to be singly occurring. But this isn't necessarily true.  So starting with 0.8.0 the X-properties are represented by an array of property objects.
+
+THIS MAY BREAK SOME APPLICATIONS, but the adaptation should be easy.
 
 == REQUIREMENTS:
 
@@ -348,12 +370,9 @@ or by a recent(>= 2.2) version of the ActiveSupport gem which is part of Ruby on
     
 === From github
 
-    #TODO: publish to github
-
 ==== As a Gem
 
-    #TODO: add the gem source info for github
-    sudo gem install ????? --source http://github.com/????
+    sudo gem install rubyredrick-ri_cal --source http://gems.github.com/
    
 ==== From source
 

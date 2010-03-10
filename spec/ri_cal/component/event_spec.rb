@@ -1,8 +1,117 @@
+# encoding: utf-8
 #- ©2009 Rick DeNatale, All rights reserved. Refer to the file README.txt for the license
 
 require File.join(File.dirname(__FILE__), %w[.. .. spec_helper])
 
 describe RiCal::Component::Event do
+  
+  context ".finish_time" do
+    it "should be the end of the start day for an event with a date dtstart and no dtend or duration" do
+      @it = RiCal.Event do |evt|
+        evt.dtstart = "20090704"
+      end
+      @it.finish_time.should == DateTime.parse("20090704T235959")
+    end
+    
+    it "should be the end of the end day for an event with a date dtstart and a dtend" do
+      @it = RiCal.Event do |evt|
+        evt.dtstart = "20090704"
+        evt.dtend = "20090706"
+      end
+      @it.finish_time.should == DateTime.parse("20090706T235959")
+    end
+    
+    it "should be the start time for an event with a datetime dtstart and no dtend or duration" do
+      @it = RiCal.Event do |evt|
+        evt.dtstart = "20090704T013000Z"
+      end
+      @it.finish_time.should == DateTime.parse("20090704T013000Z")
+    end
+    
+    it "should be the end time for an event with a datetime dtend" do
+      @it = RiCal.Event do |evt|
+        evt.dtstart = "20090704"
+        evt.dtend = "20090706T120000"
+      end
+      @it.finish_time.should == DateTime.parse("20090706T120000")
+    end
+    
+    it "should be the end time for an event with a datetime dtstart and a duration" do
+      @it = RiCal.Event do |evt|
+        evt.dtstart = "20090704T120000Z"
+        evt.duration = "PT1H30M"
+      end
+      @it.finish_time.should == DateTime.parse("20090704T133000Z")
+    end
+    
+    it "should uset the  timezone of dtstart when event has a duration" do
+      @it = RiCal.Event do |evt|
+        evt.dtstart = "TZID=Australia/Sydney:20090712T200000"
+        evt.duration = "PT1H"
+      end
+      @it.finish_time.should == DateTime.parse("2009-07-12T21:00:00+10:00")
+    end
+  end
+  
+  context ".before_range?" do
+    context "with a Date dtstart and no dtend" do
+      before(:each) do
+        @it = RiCal.Event do |evt|
+          evt.dtstart = "20090704"
+        end
+      end
+      
+      it "should be false if the range start is a date before the start date" do
+        @it.before_range?([Date.parse("20090703"), :anything]).should_not be
+      end
+      
+      it "should be false if the range start is the start date" do
+        @it.before_range?([Date.parse("20090704"), :anything]).should_not be
+      end
+      
+      it "should be true if the range start is a date after the start date" do
+        @it.before_range?([Date.parse("20090705"), :anything]).should be
+      end
+    end
+
+    context "with a Date dtstart and date dtend" do
+      before(:each) do
+        @it = RiCal.Event do |evt|
+          evt.dtstart = "20090704"
+          evt.dtend = "20090706"
+        end
+      end
+      
+      it "should be false if the range start is a date before the end date" do
+        @it.before_range?([Date.parse("20090705"), :anything]).should_not be
+      end
+      
+      it "should be false if the range start is the end date" do
+        @it.before_range?([Date.parse("20090706"), :anything]).should_not be
+      end
+      
+      it "should be true if the range start is a date after the end date" do
+        @it.before_range?([Date.parse("20090707"), :anything]).should be
+      end
+    end
+  end
+
+  context "bug report from Noboyuki Tomizawa" do
+    before(:each) do
+
+      @it = RiCal.Calendar do |cal|
+        cal.event do |event|
+          event.description = "test"
+          event.dtstart = "TZID=Asia/Tokyo:20090530T123000"
+          event.dtend =   "TZID=Asia/Tokyo:20090530T123001"
+        end
+      end
+    end
+    
+    it "should not fail" do
+      lambda {@it.export}.should_not raise_error
+    end
+  end
 
   context "rdate property methods" do
     before(:each) do
@@ -215,7 +324,7 @@ describe RiCal::Component::Event do
     context "with no dtend" do
       context "and a duration" do
         it "should be the dtstart plus the duration" do
-          @event.duration = "+P1H"
+          @event.duration = "+PT1H"
           @event.finish_time.should == DateTime.civil(2009,5,25,16,19,0,0)
         end
       end
@@ -267,7 +376,8 @@ describe RiCal::Component::Event do
 
     it "should be the utc time of the start of the day of dtstart in the earliest timezone for a date" do
       event = RiCal.Event {|e| e.dtstart = "20090525"}
-      event.zulu_occurrence_range_start_time.should == DateTime.civil(2009,05,24,12,0,0,0)
+      result = event.zulu_occurrence_range_start_time
+      result.should == DateTime.civil(2009,05,24,12,0,0,0)
     end
 
     it "should be the utc time of the dtstart in the earliest timezone if dtstart is a floating datetime" do
@@ -291,7 +401,7 @@ describe RiCal::Component::Event do
     context "with no dtend" do
       context "and a duration" do
         it "should be the dtstart plus the duration" do
-          @event.duration = "+P1H"
+          @event.duration = "+PT1H"
           @event.zulu_occurrence_range_finish_time.should == DateTime.civil(2009,5,25,20 ,19,0,0)
         end
       end
@@ -386,12 +496,12 @@ describe RiCal::Component::Event do
     end
 
     it "should reset the dtend property if the duration property is set" do
-      @it.duration_property = "P1H".to_ri_cal_duration_value
+      @it.duration_property = "PT1H".to_ri_cal_duration_value
       @it.dtend_property.should be_nil
     end
 
     it "should reset the dtend property if the duration ruby value is set" do
-      @it.duration = "P1H".to_ri_cal_duration_value
+      @it.duration = "PT1H".to_ri_cal_duration_value
       @it.dtend_property.should be_nil
     end
   end
@@ -494,7 +604,7 @@ describe RiCal::Component::Event do
         end
 
         it "should have the timezone in the ical representation of the exdate property" do
-          @event.exdate_property.to_s.should match(%r{;TZID=America/New_York[:;]})
+          @event.exdate_property.first.to_s.should match(%r{;TZID=America/New_York[:;]})
         end
       end
 
@@ -586,23 +696,23 @@ ENDCAL
     end
   end
 
-    context "An event with a floating start" do
+  context "An event with a floating start" do
 
-      before(:each) do
-        cal = RiCal.Calendar do |ical|
-          ical.event do |ievent|
-            ievent.dtstart "20090530T120000"
-          end
+    before(:each) do
+      cal = RiCal.Calendar do |ical|
+        ical.event do |ievent|
+          ievent.dtstart "20090530T120000"
         end
-        @event = cal.events.first
       end
-
-      it "should produce a DateTime for dtstart" do
-        @event.dtstart.should be_instance_of(DateTime)
-      end
-
-      it "should have a floating dtstart" do
-        @event.dtstart.should have_floating_timezone
-      end
+      @event = cal.events.first
     end
+
+    it "should produce a DateTime for dtstart" do
+      @event.dtstart.should be_instance_of(DateTime)
+    end
+
+    it "should have a floating dtstart" do
+      @event.dtstart.should have_floating_timezone
+    end
+  end
 end

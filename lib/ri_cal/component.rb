@@ -2,6 +2,17 @@ module RiCal
   #- ©2009 Rick DeNatale, All rights reserved. Refer to the file README.txt for the license
   #
   class Component #:nodoc:
+
+    autoload :Alarm, "ri_cal/component/alarm.rb"
+    autoload :Calendar, "ri_cal/component/calendar.rb"
+    autoload :Event, "ri_cal/component/event.rb"
+    autoload :Freebusy, "ri_cal/component/freebusy.rb"
+    autoload :Journal, "ri_cal/component/journal.rb"
+    autoload :NonStandard, "ri_cal/component/non_standard.rb"
+    autoload :TZInfoTimezone, "ri_cal/component/t_z_info_timezone.rb"
+    autoload :Timezone, "ri_cal/component/timezone.rb"
+    autoload :Todo, "ri_cal/component/todo.rb"
+
     class ComponentBuilder #:nodoc:
       def initialize(component)
         @component = component
@@ -30,11 +41,9 @@ module RiCal
       end
     end
 
-    autoload :Timezone, "#{File.dirname(__FILE__)}/component/timezone.rb"
-
     attr_accessor :imported #:nodoc:
 
-    def initialize(parent=nil, &init_block) #:nodoc:
+    def initialize(parent=nil, entity_name = nil, &init_block) #:nodoc:
       @parent = parent
       if block_given?
         if init_block.arity == 1
@@ -81,8 +90,8 @@ module RiCal
       {}
     end
 
-    def self.from_parser(parser, parent) #:nodoc:
-      entity = self.new(parent)
+    def self.from_parser(parser, parent, entity_name) #:nodoc:
+      entity = self.new(parent, entity_name)
       entity.imported = true
       line = parser.next_separated_line
       while parser.still_in(entity_name, line)
@@ -142,12 +151,12 @@ module RiCal
     # return a hash of any extended properties, (i.e. those with a property name starting with "X-"
     # representing an extension to the RFC 2445 specification)
     def x_properties
-      @x_properties ||= {}
+      @x_properties ||= Hash.new {|h,k| h[k] = []}
     end
 
     # Add a n extended property
     def add_x_property(name, prop)
-      x_properties[name] = prop
+      x_properties[name] << prop
     end
 
     def method_missing(selector, *args, &b) #:nodoc:
@@ -200,8 +209,10 @@ module RiCal
     end
 
     def export_x_properties_to(export_stream) #:nodoc:
-      x_properties.each do |name, prop|
-        export_stream.puts("#{name}:#{prop}")
+      x_properties.each do |name, props|
+        props.each do | prop |
+          export_stream.puts("#{name}:#{prop}")
+        end
       end
     end
 
@@ -223,8 +234,8 @@ module RiCal
       export_stream.puts("BEGIN:#{entity_name}")
       export_properties_to(export_stream)
       export_x_properties_to(export_stream)
-      subcomponents.values do |sub|
-        export_subcomponent_to(export_subcomponent_to, sub)
+      subcomponents.values.each do |sub|
+        export_subcomponent_to(export_stream, sub)
       end
       export_stream.puts("END:#{entity_name}")
     end
@@ -239,9 +250,4 @@ module RiCal
       wrapper_calendar.export(stream)
     end
   end
-end
-
-Dir[File.dirname(__FILE__) + "/component/*.rb"].sort.each do |path|
-  filename = File.basename(path)
-  require path
 end

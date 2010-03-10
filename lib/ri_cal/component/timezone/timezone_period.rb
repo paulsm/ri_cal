@@ -1,5 +1,4 @@
-require File.join(File.dirname(__FILE__), %w[.. .. properties timezone_period.rb])
-
+# -*- coding: utf-8 -*-
 module RiCal
   class Component
     class Timezone
@@ -14,6 +13,10 @@ module RiCal
 
         include OccurrenceEnumerator
 
+        def occurrence_cache #:nodoc:
+          @occurrence_cache ||= []
+        end
+
         def zone_identifier #:nodoc:
           tzname.first
         end
@@ -25,7 +28,7 @@ module RiCal
         def exdate_property #:nodoc:
           nil
         end
-        
+
         def utc_total_offset #:nodoc:
           tzoffsetto_property.to_seconds
         end
@@ -38,23 +41,34 @@ module RiCal
           last_before_local(utc_time + tzoffsetfrom_property)
         end
 
-        def last_before_local(local_time) #:nodoc:
-
-          return @cand_occurrence if @last_checked_dtstart &&
-                                     ((@cand_occurrence == nil) ||
-                                      (@cand_occurrence.dtstart_property < local_time &&
-                                       local_time < @last_checked_dtstart))
-          
-          @last_local_time = local_time
-          @last_checked_dtstart = nil
-          @cand_occurrence = nil
-          
-          each do |occurrence|
-            @last_checked_dtstart = occurrence.dtstart_property
-            return @cand_occurrence if occurrence.dtstart_property > local_time
-            @cand_occurrence = occurrence
+        def fill_cache(local_time)
+          if occurrence_cache.empty? || occurrence_cache.last.dtstart_property <= local_time
+            while true
+              occurrence = enumeration_instance.next_occurrence
+              break unless occurrence
+              occurrence = recurrence(occurrence)
+              occurrence_cache << occurrence
+              break if occurrence.dtstart_property > local_time
+            end
           end
-          return @cand_occurrence
+        end
+
+        def last_before_local(local_time) #:nodoc:
+          if recurs?
+            fill_cache(local_time)
+            cand_occurrence = nil
+            occurrence_cache.each do |occurrence|
+              return cand_occurrence if occurrence.dtstart_property > local_time
+              cand_occurrence = occurrence
+            end
+            return cand_occurrence
+          else
+            return self
+          end
+        end
+
+        def enumeration_instance
+          @enumeration_instance ||= super
         end
 
       end

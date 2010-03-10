@@ -4,14 +4,40 @@
 # and building calendars and calendar components.
 module RiCal
   
+  require 'stringio'
+  require 'rational'
+  
   my_dir =  File.dirname(__FILE__)
   
-  autoload :Component, "#{my_dir}/ri_cal/component.rb"
-  autoload :TimezonePeriod, "#{my_dir}/ri_cal/properties/timezone_period.rb"
-  autoload :OccurrenceEnumerator, "#{my_dir}/ri_cal/occurrence_enumerator.rb"
+  $LOAD_PATH << my_dir unless $LOAD_PATH.include?(my_dir)
+
+  if Object.const_defined?(:ActiveSupport)
+    as = Object.const_get(:ActiveSupport)
+    if as.const_defined?(:TimeWithZone)
+      time_with_zone = as.const_get(:TimeWithZone)
+    end
+  end
   
+  # TimeWithZone will be set to ActiveSupport::TimeWithZone if the activesupport gem is loaded
+  # otherwise it will be nil
+  TimeWithZone = time_with_zone  
+  
+  autoload :Component, "ri_cal/component.rb"
+  autoload :CoreExtensions, "ri_cal/core_extensions.rb" 
+  autoload :FastDateTime, "ri_cal/fast_date_time.rb" 
+  autoload :FloatingTimezone, "ri_cal/floating_timezone.rb" 
+  autoload :InvalidPropertyValue, "ri_cal/invalid_property_value.rb" 
+  autoload :InvalidTimezoneIdentifier, "ri_cal/invalid_timezone_identifier.rb" 
+  autoload :OccurrenceEnumerator, "ri_cal/occurrence_enumerator.rb"
+  autoload :OccurrencePeriod, "ri_cal/occurrence_period.rb"
+  autoload :TimezonePeriod, "ri_cal/properties/timezone_period.rb"
+  autoload :Parser, "ri_cal/parser.rb"
+  autoload :Properties, "ri_cal/properties.rb"
+  autoload :PropertyValue, "ri_cal/property_value.rb" 
+  autoload :RequiredTimezones, "ri_cal/required_timezones.rb" 
+  require "ri_cal/core_extensions.rb"
   # :stopdoc:
-  VERSION = '0.5.2'
+  VERSION = '0.8.5'
   LIBPATH = ::File.expand_path(::File.dirname(__FILE__)) + ::File::SEPARATOR
   PATH = ::File.dirname(LIBPATH) + ::File::SEPARATOR
 
@@ -120,25 +146,42 @@ module RiCal
     Component::TimezonePeriod.new(&init_block)
   end
 
-  if Object.const_defined?(:ActiveSupport)
-    as = Object.const_get(:ActiveSupport)
-    if as.const_defined?(:TimeWithZone)
-      time_with_zone = as.const_get(:TimeWithZone)
-    end
-  end
-  
-  # TimeWithZone will be set to ActiveSupport::TimeWithZone if the activesupport gem is loaded
-  # otherwise it will be nil
-  TimeWithZone = time_with_zone
-
   # return a new Todo calendar component.  If a block is provided it will will be executed in
   # the context of a builder object which can be used to initialize the properties and alarms of the 
   # new Todo.  
   def self.Todo(&init_block)
     Component::Todo.new(&init_block)
   end
+  
+  def self.ro_calls=(value)
+    @ro_calls = value
+  end
+  
+  def self.ro_calls
+    @ro_calls ||= 0
+  end
+  
+  def self.ro_misses=(value)
+    @ro_misses = value
+  end
+  
+  def self.ro_misses
+    @ro_misses ||= 0
+  end
+  
+  def self.RationalOffset
+    self.ro_calls += 1
+    @rational_offset ||= Hash.new {|h, seconds|
+      self.ro_misses += 1
+      h[seconds] = Rational(seconds, 86400)}
+  end
+
 end  # module RiCal
 
-RiCal.require_all_libs_relative_to(__FILE__)
+(-12..12).each do |hour_offset|
+  RiCal.RationalOffset[hour_offset * 86400]
+end
 
+
+#RiCal.require_all_libs_relative_to(__FILE__)
 # EOF

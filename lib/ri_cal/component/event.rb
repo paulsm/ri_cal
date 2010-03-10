@@ -1,5 +1,3 @@
-require File.join(File.dirname(__FILE__), %w[.. properties event.rb])
-
 module RiCal
   class Component
     #- ©2009 Rick DeNatale, All rights reserved. Refer to the file README.txt for the license
@@ -29,7 +27,7 @@ module RiCal
         dtstart_property ? dtstart.to_datetime : nil
       end
       
-      # Return a date_time representing the time at which the event starts
+      # Return a date_time_property representing the time at which the event ends
       def finish_property
         if dtend_property
           dtend_property

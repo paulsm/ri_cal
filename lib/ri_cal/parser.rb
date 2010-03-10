@@ -3,6 +3,7 @@ module RiCal
   #- All rights reserved. Refer to the file README.txt for the license
   #
   class Parser # :nodoc:
+    attr_reader :last_line_str #:nodoc:
     def next_line #:nodoc:
       result = nil
       begin
@@ -23,8 +24,11 @@ module RiCal
       if string
         string.split(";").inject({}) { |result, val|
           m = /^(.+)=(.+)$/.match(val)
-          invalid unless m
-          result[m[1]] = m[2]
+          raise "Invalid parameter value #{val.inspect}" unless m
+          #TODO - The gsub below is a simplest fix for http://rick_denatale.lighthouseapp.com/projects/30941/tickets/19
+          #       it may need further examination if more pathological cases show up.
+          param_val = m[2].sub(/^\"(.*)\"$/, '\1') 
+          result[m[1]] = param_val
           result 
         }
       else
@@ -35,7 +39,7 @@ module RiCal
     def self.params_and_value(string, optional_initial_semi = false) #:nodoc:
       string = string.sub(/^:/,'')
       return [{}, string] unless optional_initial_semi || string.match(/^;/)
-      segments = string.sub(';','').split(":")
+      segments = string.sub(';','').split(":", -1)
       return [{}, string] if segments.length < 2
       quote_count = 0
       gathering_params = true
@@ -56,11 +60,12 @@ module RiCal
     def separate_line(string) #:nodoc:
       match = string.match(/^([^;:]*)(.*)$/)
       name = match[1]
+      @last_line_str = string
       params, value = *Parser.params_and_value(match[2])
       {
         :name => name,
         :params => params,
-        :value => value
+        :value => value,
       }
     end
 
@@ -94,7 +99,8 @@ module RiCal
       result = []
       while start_line = next_line
         @parent_stack = []
-        result << parse_one(start_line, nil)
+        component = parse_one(start_line, nil)
+        result << component if component
       end
       result
     end
@@ -109,27 +115,28 @@ module RiCal
         first_line = separate_line(start)
       end
       invalid unless first_line[:name] == "BEGIN"
-      result = case first_line[:value]
+      entity_name = first_line[:value]
+      result = case entity_name
       when "VCALENDAR"
-        RiCal::Component::Calendar.from_parser(self, parent_component)
+        RiCal::Component::Calendar.from_parser(self, parent_component, entity_name)
       when "VEVENT"
-        RiCal::Component::Event.from_parser(self, parent_component)
+        RiCal::Component::Event.from_parser(self, parent_component, entity_name)
       when "VTODO"
-        RiCal::Component::Todo.from_parser(self, parent_component)
+        RiCal::Component::Todo.from_parser(self, parent_component, entity_name)
       when "VJOURNAL"
-        RiCal::Component::Journal.from_parser(self, parent_component)
+        RiCal::Component::Journal.from_parser(self, parent_component, entity_name)
       when "VFREEBUSY"
-        RiCal::Component::Freebusy.from_parser(self, parent_component)
+        RiCal::Component::Freebusy.from_parser(self, parent_component, entity_name)
       when "VTIMEZONE"
-        RiCal::Component::Timezone.from_parser(self, parent_component)
+        RiCal::Component::Timezone.from_parser(self, parent_component, entity_name)
       when "VALARM"
-        RiCal::Component::Alarm.from_parser(self, parent_component)
+        RiCal::Component::Alarm.from_parser(self, parent_component, entity_name)
       when "DAYLIGHT"
-        RiCal::Component::Timezone::DaylightPeriod.from_parser(self, parent_component)
+        RiCal::Component::Timezone::DaylightPeriod.from_parser(self, parent_component, entity_name)
       when "STANDARD"
-        RiCal::Component::Timezone::StandardPeriod.from_parser(self, parent_component)
+        RiCal::Component::Timezone::StandardPeriod.from_parser(self, parent_component, entity_name)
       else
-        invalid
+        RiCal::Component::NonStandard.from_parser(self, parent_component, entity_name)
       end
       @parent_stack.pop
       result
