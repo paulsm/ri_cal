@@ -573,6 +573,23 @@ describe RiCal::OccurrenceEnumerator::OccurrenceMerger do
   end
 
   describe "#zulu_occurrence_range" do
+    it "should provide zulu occurrence range" do
+      events = RiCal.parse_string(<<-ENDCAL)
+BEGIN:VEVENT
+EXDATE;TZID=Australia/Sydney:20101015T102000
+EXDATE;TZID=Australia/Sydney:20101008T102000
+DTEND;TZID=Australia/Sydney;VALUE=DATE-TIME:20101008T113000
+DTSTART;TZID=Australia/Sydney;VALUE=DATE-TIME:20101008T102000
+TRANSP:OPAQUE
+DTSTAMP;VALUE=DATE-TIME:20100806T215613Z
+UID:247D5BA2-7A63-40CA-957B-13EFD9F55384
+SUMMARY:Broken
+RRULE:FREQ=WEEKLY;INTERVAL=1;COUNT=1;BYDAY=WE
+SEQUENCE:0
+END:VEVENT
+ENDCAL
+      events.first.zulu_occurrence_range 
+    end
   end
 
   describe "#next_occurence" do

@@ -234,7 +234,7 @@ module RiCal
         first = occurrences(:count => 1).first
         last = nil
       end
-      [first.zulu_occurrence_range_start_time, last ? last.zulu_occurrence_range_finish_time : nil]
+      [first ? first.zulu_occurrence_range_start_time : nil, last ? last.zulu_occurrence_range_finish_time : nil]
     end
 
     def set_occurrence_properties!(occurrence) # :nodoc:
